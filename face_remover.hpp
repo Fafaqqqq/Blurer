@@ -75,12 +75,12 @@ private:
 class video_processor {
 public:
     video_processor(const std::string &input_path,
-                    const std::string &output_path)
+                    const std::string &output_path, const std::string &model_path, const std::string &protoPath,   const std::string &caffePath)
         : input_path_(input_path)
         , output_path_(output_path)
         , net_(
               std::make_shared<cv::dnn::Net>(
-                  cv::dnn::readNetFromCaffe(NET_PROTO_FILE, NET_CAFFE_FILE)))
+                  cv::dnn::readNetFromCaffe(model_path + protoPath, model_path + caffePath)))
         , frame_proc_(net_)
     {
         net_->setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
