@@ -104,7 +104,8 @@ public:
 
         // Настраиваем VideoWriter для сохранения видео
         video_writer videoWriter(
-            output_path_ + outfile + ".mp4",
+            // output_path_ + outfile + ".mp4",
+            output_path_ + filename_,
             video_writer::fourcc('a', 'v', 'c', '1'),
             fps,
             cv::Size(frameWidth, frameHeight));

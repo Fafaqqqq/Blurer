@@ -43,7 +43,10 @@ int main()
 
         process_video(input_path, output_path, filename); // Запускаем обработку в отдельном потоке
 
-        return crow::response(200, "Video processing started for " + filename);
+        crow::json::wvalue response;
+        response["fileName"] = filename;
+
+        return crow::response(200, response);
     });
 
     // Запуск сервера
