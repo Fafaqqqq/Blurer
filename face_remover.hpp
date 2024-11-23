@@ -117,19 +117,15 @@ public:
 
         while (true) {
             capture_ >> frame;
-            if (frame.empty())
+            if (frame.empty()) {
+                std::cout << "Empty frame" << std::endl;
                 break;
+            }
 
             frame_proc_.proc(frame, net_, 0.35);
 
             // Сохраняем обработанный кадр в видеофайл
             videoWriter.write(frame);
-
-            // imshow("Face Bluring", frame);
-
-            char c = (char)cv::waitKey(10);
-            if (c == 27 || c == 'q' || c == 'Q')
-                break;
         }
     }
 
