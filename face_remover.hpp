@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -49,6 +50,10 @@ public:
                 y1 = std::max(0, std::min(y1, frame.rows - 1));
                 x2 = std::max(0, std::min(x2, frame.cols - 1));
                 y2 = std::max(0, std::min(y2, frame.rows - 1));
+
+                if (abs(x1 - x2) == 0 || abs(y1 - y2) == 0) {
+                    continue;
+                }
 
                 // Выделяем область лица
                 cv::Rect faceRect(cv::Point(x1, y1), cv::Point(x2, y2));
