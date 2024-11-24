@@ -68,8 +68,8 @@ int main()
             return crow::response(400, "Invalid JSON body. Required: modelsPath, caffeFile, protoFile.");
         }
 
-        if (body["modelInfo"]["protoFile"].s() == "cars_lisence.prototxt" &&
-            body["modelInfo"]["caffeFile"].s() == "cars_lisence.caffemodel") {
+        if (body["modelInfo"]["protoFile"].s() == "proto_cars_lisence.prototxt" &&
+            body["modelInfo"]["caffeFile"].s() == "caffe_cars_lisence.caffemodel") {
             process_video(input_path, output_path, filename); // Запускаем обработку в отдельном потоке
         } else {
             std::string model_path = body["modelInfo"]["modelsPath"].s();
@@ -78,7 +78,7 @@ int main()
 
             process_video(input_path, output_path, filename, model_path, model_proto, model_caffe);
         }
-        
+
         crow::json::wvalue response;
         response["fileName"] = filename;
 
