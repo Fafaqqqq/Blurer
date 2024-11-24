@@ -76,6 +76,9 @@ int main()
             std::string model_proto = body["modelInfo"]["protoFile"].s();
             std::string model_caffe = body["modelInfo"]["caffeFile"].s();
 
+            std::cout << model_path + model_proto << std::endl;
+            std::cout << model_path + model_caffe << std::endl;
+
             process_video(input_path, output_path, filename, model_path, model_proto, model_caffe);
         }
 
