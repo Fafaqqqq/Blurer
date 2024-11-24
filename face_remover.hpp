@@ -7,10 +7,8 @@
 #include <opencv2/dnn.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
+#include <opencv2/opencv.hpp>
 #include <opencv2/videoio.hpp>
-
-#define NET_PROTO_FILE "deploy.prototxt"
-#define NET_CAFFE_FILE "res10_300x300_ssd_iter_140000.caffemodel"
 
 namespace face_remover {
 
@@ -21,14 +19,11 @@ using network = std::shared_ptr<cv::dnn::Net>;
 
 class frame_processor {
 public:
-    frame_processor(const network &net)
-        : net_(net)
-    {
-    }
+    frame_processor() = default;
 
-    void proc(video_frame &frame, network &net, float confThreshold)
+    void blur_faces(video_frame &frame, network &net, float confThreshold)
     {
-        video_frame blob = cv::dnn::blobFromImage(frame, 1.0, cv::Size(300, 300), cv::Scalar(104, 177, 123), false, false);
+        video_frame blob = cv::dnn::blobFromImage(frame, 1.05, cv::Size(300, 300), cv::Scalar(104, 177, 123), false, false);
         net->setInput(blob);
         cv::Mat detections = net->forward();
 
@@ -68,24 +63,57 @@ public:
         }
     }
 
-private:
-    network net_;
+    void blure_car_lisence(video_frame &frame)
+    {
+        // Загружаем классификатор для обнаружения номеров
+        cv::CascadeClassifier plate_cascade;
+        if (!plate_cascade.load("haarcascade_russian_plate_number.xml")) {
+            std::cout << "Не удалось загрузить классификатор haarcascade_russian_plate_number.xml" << std::endl;
+            return;
+        }
+
+        // Преобразуем изображение в оттенки серого
+        cv::Mat gray;
+        cv::cvtColor(frame, gray, cv::COLOR_RGB2GRAY);
+
+        // Обнаруживаем номера
+        std::vector<cv::Rect> plates;
+        plate_cascade.detectMultiScale(gray, plates, 1.07, // scaleFactor: уменьшите до 1.05 или даже 1.02
+                                       3,                  // minNeighbors: уменьшите для повышения чувствительности
+                                       0 | cv::CASCADE_SCALE_IMAGE,
+                                       cv::Size(20, 20),    // minSize: уменьшите минимальный размер
+                                       cv::Size(200, 200)); // maxSize: увеличьте максимальный размер);
+
+        // Замыливаем области с номерами
+        for (size_t i = 0; i < plates.size(); i++) {
+            cv::Mat plateROI = frame(plates[i]);
+            cv::GaussianBlur(plateROI, plateROI, cv::Size(51, 51), 0);
+        }
+    }
 };
 
 class video_processor {
 public:
     video_processor(const std::string &input_path,
-                    const std::string &output_path, const std::string &model_path, const std::string &protoPath,   const std::string &caffePath)
+                    const std::string &output_path,
+                    const std::string &model_path,
+                    const std::string &protoPath,
+                    const std::string &caffePath)
         : input_path_(input_path)
         , output_path_(output_path)
         , net_(
               std::make_shared<cv::dnn::Net>(
                   cv::dnn::readNetFromCaffe(model_path + protoPath, model_path + caffePath)))
-        , frame_proc_(net_)
     {
         net_->setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
         net_->setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
     }
+
+    video_processor(const std::string &input_path,
+                    const std::string &output_path)
+        : input_path_(input_path)
+        , output_path_(output_path)
+    {}
 
     bool open_file(const std::string &filename)
     {
@@ -127,7 +155,10 @@ public:
                 break;
             }
 
-            frame_proc_.proc(frame, net_, 0.35);
+            if (net_)
+                frame_proc_.blur_faces(frame, net_, 0.35);
+            else
+                frame_proc_.blure_car_lisence(frame);
 
             // Сохраняем обработанный кадр в видеофайл
             videoWriter.write(frame);
